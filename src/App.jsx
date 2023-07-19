@@ -7,17 +7,13 @@ function Square({ value, onSquareClick }) {
     </button>
   );
 }
-export default function Board() {
-  const [squares, setSquares] = useState(Array(9).fill(null));
-  const [xIsNext, setXIsNext] = useState(true);
-
+function Board({ xIsNext, squares, onPlay }) {
   function handleClick(i) {
     if (squares[i] || callculateWinner(squares)) return;
     const nextSquares = squares.slice();
     nextSquares[i] = xIsNext ? "X" : "O";
 
-    setSquares(nextSquares);
-    setXIsNext(!xIsNext);
+    onPlay(nextSquares);
   }
 
   const winner = callculateWinner(squares);
@@ -43,6 +39,55 @@ export default function Board() {
   );
 }
 
+export default function Game() {
+  const [xIsNext, setXIsNext] = useState(true);
+  const [history, sethistory] = useState([Array(9).fill(null)]);
+  const [currentMove, setCurrentMove] = useState(0);
+  const currentSquares = history[currentMove];
+
+  function jumpTo(nextMove) {
+    setCurrentMove(nextMove);
+    setXIsNext(nextMove % 2 === 0);
+  }
+
+  function handlePlayer(nextSquares) {
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+    sethistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
+    setXIsNext(!xIsNext);
+  }
+
+  const moves = history.map((squares, move) => {
+    let descriptions = "";
+
+    if (move > 0) {
+      descriptions = "Go to move #" + move;
+    } else {
+      descriptions = "Go to game start";
+    }
+
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{descriptions}</button>
+      </li>
+    );
+  });
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board
+          xIsNext={xIsNext}
+          squares={currentSquares}
+          onPlay={handlePlayer}
+        />
+      </div>
+      <div className="game-info">
+        <ul>{moves}</ul>
+      </div>
+    </div>
+  );
+}
 function callculateWinner(squares) {
   const lines = [
     [0, 1, 2],
